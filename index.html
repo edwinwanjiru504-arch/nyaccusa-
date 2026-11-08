@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYACCUSA Transport Department</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5f9;color:#172033}
+header{background:#063b2b;color:white;padding:25px 15px;text-align:center}
+header h1{margin:0;font-size:25px}
+header p{margin:8px 0 0}
+nav{background:#092f25;padding:12px;text-align:center}
+nav button{margin:4px}
+main{max-width:1100px;margin:22px auto;padding:12px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0001}
+h2{color:#075b40;margin-top:0}
+label{display:block;margin:12px 0 5px;font-weight:bold}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px}
+button{border:0;padding:11px 16px;border-radius:7px;background:#08784e;color:white;cursor:pointer;font-weight:bold}
+button:hover{opacity:.85}
+button:disabled{background:#999;cursor:not-allowed}
+.secondary{background:#334155}
+.danger{background:#b91c1c}
+.gold{background:#d69e00;color:#111}
+.seats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.seat{background:#dcfce7;color:#166534;border:2px solid #16a34a;padding:15px 4px}
+.seat.selected{background:#08784e;color:white;border-color:#064e3b}
+.seat.booked{background:#fee2e2;color:#991b1b;border-color:#dc2626}
+.legend{font-size:13px;margin-top:10px}
+.notice{background:#fff7d6;padding:12px;border-radius:8px;margin:12px 0}
+.success{background:#dcfce7;padding:12px;border-radius:8px;margin:12px 0}
+.hidden{display:none!important}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;font-size:13px}
+th{background:#e2e8f0}
+.tablewrap{overflow-x:auto}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:#e8f5ee;padding:15px;border-radius:9px}
+.stat strong{display:block;font-size:24px;color:#075b40}
+footer{text-align:center;background:#092f25;color:white;padding:22px;margin-top:30px}
+.ticket{border:2px dashed #08784e;padding:20px;border-radius:10px}
+@media(max-width:550px){.seats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+<h1>NYACCUSA TRANSPORT DEPARTMENT</h1>
+<p>Safe journeys • Reliable transport • Comrade first</p>
+<p>Chuka University Students Association</p>
+</header>
+
+<nav>
+<button onclick="showPage('booking')">Book a Seat</button>
+<button onclick="showPage('admin')">Admin Panel</button>
+</nav>
+
+<main>
+
+<section id="booking">
+<div class="card">
+<h2>Book Your Journey</h2>
+
+<label>Choose Route</label>
+<select id="route" onchange="changeTrip()">
+<option value="Chuka - Nairobi">Chuka – Nairobi</option>
+<option value="Chuka - Engineer, Kinangop">Chuka – Engineer, Kinangop</option>
+<option value="Chuka - Naivasha">Chuka – Naivasha</option>
+</select>
+
+<label>Travel Date</label>
+<input type="date" id="date">
+
+<label>Departure Time</label>
+<select id="time">
+<option>6:00 AM</option>
+<option>7:00 AM</option>
+<option>8:00 AM</option>
+<option>10:00 AM</option>
+<option>12:00 PM</option>
+<option>2:00 PM</option>
+<option>4:00 PM</option>
+</select>
+
+<h3>Choose Your Seat</h3>
+<div class="legend">🟢 Available &nbsp; 🔴 Booked &nbsp; 🟩 Selected</div>
+<div class="seats" id="seats"></div>
+<p id="seatInfo">Select an available seat.</p>
+</div>
+
+<div class="card">
+<h2>Passenger Details</h2>
+<form id="bookingForm">
+<label>Full Name</label>
+<input id="name" required placeholder="Enter your full name">
+
+<label>Phone Number</label>
+<input id="phone" required type="tel" placeholder="07XXXXXXXX">
+
+<label>Registration Number</label>
+<input id="reg" required placeholder="University registration number">
+
+<label>Additional Comments (Optional)</label>
+<textarea id="passengerComment" rows="3" placeholder="Any special request?"></textarea>
+
+<div class="notice">
+<strong>Payment Information</strong><br>
+M-Pesa Buy Goods Till Number: <strong>1641357</strong><br>
+Pay the displayed fare after reviewing your booking. Submit your M-Pesa transaction code below.
+</div>
+
+<label>M-Pesa Transaction Code</label>
+<input id="mpesa" placeholder="Enter transaction code">
+
+<button type="submit">Review & Submit Booking</button>
+</form>
+</div>
+
+<div class="card hidden" id="review">
+<h2>Review Your Booking</h2>
+<div id="reviewDetails"></div>
+<button onclick="confirmBooking()">Confirm Booking</button>
+<button class="secondary" onclick="cancelReview()">Edit Details</button>
+</div>
+
+<div class="card hidden" id="ticketCard">
+<h2>Booking Confirmation</h2>
+<div id="ticket" class="ticket"></div>
+<button onclick="window.print()">Print Ticket</button>
+</div>
+</section>
+
+<section id="admin" class="hidden">
+<div class="card" id="loginBox">
+<h2>NYACCUSA Admin Login</h2>
+<p>Authorised transport department administrators only.</p>
+<label>Admin Password</label>
+<input type="password" id="adminPassword" placeholder="Enter admin password">
+<button onclick="login()">Login</button>
+<p id="loginError" style="color:red"></p>
+</div>
+
+<div id="dashboard" class="hidden">
+<div class="card">
+<h2>Admin Dashboard</h2>
+<button class="secondary" onclick="logout()">Logout</button>
+<div class="statgrid" style="margin-top:15px">
+<div class="stat">Total bookings<strong id="totalBookings">0</strong></div>
+<div class="stat">Paid bookings<strong id="paidBookings">0</strong></div>
+<div class="stat">Pending payments<strong id="pendingBookings">0</strong></div>
+<div class="stat">Confirmed revenue<strong id="revenue">KSh 0</strong></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Manage Route Charges</h2>
+<label>Chuka – Nairobi (KSh)</label>
+<input type="number" id="fareNairobi" min="0">
+<label>Chuka – Engineer, Kinangop (KSh)</label>
+<input type="number" id="fareEngineer" min="0">
+<label>Chuka – Naivasha (KSh)</label>
+<input type="number" id="fareNaivasha" min="0">
+<button onclick="saveFares()">Save Route Charges</button>
+</div>
+
+<div class="card">
+<h2>Passenger Bookings</h2>
+<button onclick="exportCSV()">Download Bookings CSV</button>
+<div class="tablewrap" style="margin-top:15px">
+<table>
+<thead><tr>
+<th>Ticket</th><th>Passenger</th><th>Route</th><th>Date/Time</th>
+<th>Seat</th><th>Payment</th><th>Admin Comment</th><th>Actions</th>
+</tr></thead>
+<tbody id="bookingRows"></tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+<footer>
+<strong>NYACCUSA TRANSPORT DEPARTMENT</strong><br>
+Strategist in-charge of Transport: Edwin<br>
+Support: 0741718267
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const ADMIN_PASSWORD = "NYACCUSA";
+const STORAGE_KEY = "nyaccusa_transport_bookings_v2";
+const FARE_KEY = "nyaccusa_transport_fares_v2";
+
+let bookings = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+let fares = JSON.parse(localStorage.getItem(FARE_KEY) || "null") || {
+"Nairobi":1500,
+"Engineer":800,
+"Naivasha":1000
+};
+
+let selectedSeat = null;
+let pendingBooking = null;
+let adminLoggedIn = false;
+
+function saveBookings(){
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(bookings));
+}
+
+function saveFareStorage(){
+ localStorage.setItem(FARE_KEY,JSON.stringify(fares));
+}
+
+function getFare(route){
+ if(route.includes("Nairobi")) return Number(fares.Nairobi);
+ if(route.includes("Engineer")) return Number(fares.Engineer);
+ return Number(fares.Naivasha);
+}
+
+function tripKey(){
+ return $("route").value+"|"+$("date").value+"|"+$("time").value;
+}
+
+function occupiedSeats(){
+ const key=tripKey();
+ return bookings
+ .filter(b=>b.trip===key && b.status!=="Cancelled")
+ .map(b=>Number(b.seat));
+}
+
+// IMPORTANT: Do not reset selectedSeat inside this function.
+function refreshSeats(){
+ const grid=$("seats");
+ grid.innerHTML="";
+ const occupied=occupiedSeats();
+
+ for(let i=1;i<=16;i++){
+  const btn=document.createElement("button");
+  btn.type="button";
+  btn.className="seat";
+  btn.textContent="SEAT "+i;
+
+  if(occupied.includes(i)){
+   btn.classList.add("booked");
+   btn.disabled=true;
+   btn.textContent="SEAT "+i+" BOOKED";
+  }else{
+   if(selectedSeat===i) btn.classList.add("selected");
+   btn.onclick=()=>{
+    selectedSeat=i;
+    refreshSeats();
+   };
+  }
+  grid.appendChild(btn);
+ }
+ $("seatInfo").textContent=selectedSeat
+ ? "Selected seat: "+selectedSeat
+ : "Select one available seat.";
+}
+
+function changeTrip(){
+ selectedSeat=null;
+ $("review").classList.add("hidden");
+ refreshSeats();
+}
+
+function showPage(page){
+ $("booking").classList.toggle("hidden",page!=="booking");
+ $("admin").classList.toggle("hidden",page!=="admin");
+}
+
+$("date").min=new Date().toISOString().split("T")[0];
+$("date").value=$("date").min;
+$("date").addEventListener("change",changeTrip);
+$("time").addEventListener("change",changeTrip);
+refreshSeats();
+
+$("bookingForm").addEventListener("submit",function(e){
+ e.preventDefault();
+
+ if(!selectedSeat){
+  alert("Please select an available seat.");
+  return;
+ }
+
+ if(occupiedSeats().includes(selectedSeat)){
+  alert("That seat has just been booked. Choose another.");
+  selectedSeat=null;
+  refreshSeats();
+  return;
+ }
+
+ const phone=$("phone").value.trim();
+ if(!/^(07|01)\d{8}$/.test(phone)){
+  alert("Enter a valid Kenyan phone number.");
+  return;
+ }
+
+ const mpesa=$("mpesa").value.trim();
+ if(!mpesa){
+  alert("Enter your M-Pesa transaction code.");
+  return;
+ }
+
+ pendingBooking={
+  id:"NYA"+Date.now().toString().slice(-8),
+  name:$("name").value.trim(),
+  phone,
+  reg:$("reg").value.trim(),
+  comment:$("passengerComment").value.trim(),
+  mpesa,
+  route:$("route").value,
+  date:$("date").value,
+  time:$("time").value,
+  trip:tripKey(),
+  seat:selectedSeat,
+  fare:getFare($("route").value),
+  status:"Pending Verification",
+  adminComment:"",
+  created:new Date().toLocaleString()
+ };
+
+ $("reviewDetails").innerHTML=`
+ <p><strong>Passenger:</strong> ${safe(pendingBooking.name)}</p>
+ <p><strong>Route:</strong> ${safe(pendingBooking.route)}</p>
+ <p><strong>Date:</strong> ${safe(pendingBooking.date)}</p>
+ <p><strong>Departure:</strong> ${safe(pendingBooking.time)}</p>
+ <p><strong>Seat:</strong> ${pendingBooking.seat}</p>
+ <p><strong>Fare:</strong> KSh ${pendingBooking.fare.toLocaleString()}</p>
+ <p><strong>Transaction:</strong> ${safe(pendingBooking.mpesa)}</p>
+ <p><strong>Payment:</strong> Pending manual verification</p>
+ `;
+ $("review").classList.remove("hidden");
+ $("review").scrollIntoView({behavior:"smooth"});
+});
+
+function safe(value){
+ return String(value??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+function confirmBooking(){
+ if(!pendingBooking)return;
+
+ if(occupiedSeats().includes(pendingBooking.seat)){
+  alert("This seat has already been taken. Please select another.");
+  pendingBooking=null;
+  selectedSeat=null;
+  $("review").classList.add("hidden");
+  refreshSeats();
+  return;
+ }
+
+ bookings.push(pendingBooking);
+ saveBookings();
+
+ const b=pendingBooking;
+ $("ticket").innerHTML=`
+ <h3>NYACCUSA TRANSPORT TICKET</h3>
+ <h2>${safe(b.id)}</h2>
+ <p><strong>Passenger:</strong> ${safe(b.name)}</p>
+ <p><strong>Registration:</strong> ${safe(b.reg)}</p>
+ <p><strong>Phone:</strong> ${safe(b.phone)}</p>
+ <p><strong>Route:</strong> ${safe(b.route)}</p>
+ <p><strong>Date:</strong> ${safe(b.date)}</p>
+ <p><strong>Time:</strong> ${safe(b.time)}</p>
+ <p><strong>Seat:</strong> ${b.seat}</p>
+ <p><strong>Fare:</strong> KSh ${b.fare.toLocaleString()}</p>
+ <p><strong>Payment:</strong> Pending verification</p>
+ <p><strong>M-Pesa code:</strong> ${safe(b.mpesa)}</p>
+ <hr><p>Keep this ticket and present it before travelling.</p>
+ `;
+ $("ticketCard").classList.remove("hidden");
+ $("review").classList.add("hidden");
+ $("ticketCard").scrollIntoView({behavior:"smooth"});
+
+ pendingBooking=null;
+ selectedSeat=null;
+ $("bookingForm").reset();
+ $("date").value=new Date().toISOString().split("T")[0];
+ refreshSeats();
+}
+
+function cancelReview(){
+ pendingBooking=null;
+ $("review").classList.add("hidden");
+}
+
+function login(){
+ if($("adminPassword").value===ADMIN_PASSWORD){
+  adminLoggedIn=true;
+  $("loginBox").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  renderAdmin();
+ }else{
+  $("loginError").textContent="Incorrect password.";
+ }
+}
+
+function logout(){
+ adminLoggedIn=false;
+ $("dashboard").classList.add("hidden");
+ $("loginBox").classList.remove("hidden");
+ $("adminPassword").value="";
+}
+
+function saveFares(){
+ if(!adminLoggedIn)return;
+ const n=Number($("fareNairobi").value);
+ const e=Number($("fareEngineer").value);
+ const v=Number($("fareNaivasha").value);
+
+ if([n,e,v].some(x=>!Number.isFinite(x)||x<0)){
+  alert("Enter valid fares.");
+  return;
+ }
+
+ fares={Nairobi:n,Engineer:e,Naivasha:v};
+ saveFareStorage();
+ alert("Route charges updated.");
+ renderAdmin();
+}
+
+function renderAdmin(){
+ if(!adminLoggedIn)return;
+
+ $("fareNairobi").value=fares.Nairobi;
+ $("fareEngineer").value=fares.Engineer;
+ $("fareNaivasha").value=fares.Naivasha;
+
+ const active=bookings.filter(b=>b.status!=="Cancelled");
+ const paid=active.filter(b=>b.status==="Paid");
+ const pending=active.filter(b=>b.status!=="Paid");
+
+ $("totalBookings").textContent=active.length;
+ $("paidBookings").textContent=paid.length;
+ $("pendingBookings").textContent=pending.length;
+ $("revenue").textContent="KSh "+paid.reduce((sum,b)=>sum+Number(b.fare),0).toLocaleString();
+
+ const rows=$("bookingRows");
+ rows.innerHTML="";
+
+ bookings.forEach((b,index)=>{
+  const tr=document.createElement("tr");
+  const values=[
+   b.id,b.name,b.route,b.date+" / "+b.time,
+   "Seat "+b.seat,b.status
+  ];
+
+  values.forEach(v=>{
+   const td=document.createElement("td");
+   td.textContent=v;
+   tr.appendChild(td);
+  });
+
+  const commentCell=document.createElement("td");
+  const comment=document.createElement("input");
+  comment.value=b.adminComment||"";
+  comment.placeholder="Admin comment";
+  comment.onchange=()=>{
+   bookings[index].adminComment=comment.value;
+   saveBookings();
+  };
+  commentCell.appendChild(comment);
+  tr.appendChild(commentCell);
+
+  const actionCell=document.createElement("td");
+
+  const paidBtn=document.createElement("button");
+  paidBtn.textContent="Verify Paid";
+  paidBtn.onclick=()=>{
+   if(confirm("Have you confirmed this M-Pesa payment?")){
+    bookings[index].status="Paid";
+    saveBookings();
+    renderAdmin();
+    refreshSeats();
+   }
+  };
+  actionCell.appendChild(paidBtn);
+
+  const cancelBtn=document.createElement("button");
+  cancelBtn.textContent="Cancel";
+  cancelBtn.className="danger";
+  cancelBtn.style.marginTop="5px";
+  cancelBtn.onclick=()=>{
+   if(confirm("Cancel this booking?")){
+    bookings[index].status="Cancelled";
+    saveBookings();
+    renderAdmin();
+    refreshSeats();
+   }
+  };
+  actionCell.appendChild(cancelBtn);
+
+  tr.appendChild(actionCell);
+  rows.appendChild(tr);
+ });
+}
+
+function exportCSV(){
+ if(!adminLoggedIn)return;
+ const headers=["Ticket","Name","Phone","Registration","Route","Date","Time","Seat","Fare","M-Pesa Code","Status","Passenger Comment","Admin Comment"];
+ const records=bookings.map(b=>[
+ b.id,b.name,b.phone,b.reg,b.route,b.date,b.time,b.seat,
+ b.fare,b.mpesa,b.status,b.comment,b.adminComment
+ ]);
+
+ const csv=[headers,...records].map(row=>
+  row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")
+ ).join("\n");
+
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="NYACCUSA_Transport_Bookings.csv";
+ a.click();
+ URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
